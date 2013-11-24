@@ -111,3 +111,5 @@ for i in range(n):
   camera.rotation_euler = (10*math.pi/36, 0, math.pi/2+2*math.pi/n*i)
   camera.keyframe_insert(  data_path="location",index=-1,frame=current_frame)
   camera.keyframe_insert(  data_path="rotation_euler",index=-1,frame=current_frame)
+  
+#-----------
