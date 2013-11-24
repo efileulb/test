@@ -1,0 +1,113 @@
+import bpy  
+import copy
+import math
+
+def y_z(box,l,stack):
+
+    box_2 =copy.deepcopy(box)
+    n=len(box_2)  
+ 
+    for i in range(n):
+      for j in range(8):  
+        box_2[i][j][1]+=l
+        box_2[i][j][2]+=l
+   
+    stack.extend(box_2)
+      
+def x_y(box,l,stack):
+    
+    box_2 =copy.deepcopy(box)
+    n=len(box_2)  
+
+    for i in range(n):
+      for j in range(8):
+        box_2[i][j][0]+=l
+        box_2[i][j][1]+=l
+    
+    stack.extend(box_2)
+      
+def x_z(box,l,stack):
+
+    box_2 =copy.deepcopy(box)
+    n=len(box_2)  
+
+    for i in range(n):
+      for j in range(8):
+        box_2[i][j][0]+=l
+        box_2[i][j][2]+=l
+
+    stack.extend(box_2)
+
+      
+verts=[[[0,0,0],
+       [1,0,0],
+       [1,1,0],
+       [0,1,0],
+       [0,0,1],
+       [1,0,1],
+       [1,1,1],
+       [0,1,1]]]
+
+faces=[[0, 1, 2, 3],  
+       [4, 5, 6, 7],  
+       [0, 4, 5, 1],  
+       [1, 2, 6, 5],  
+       [3, 2, 6, 7],  
+       [0, 3, 7, 4]]
+
+stack=[]
+
+l=1
+
+for i in range(4):
+  y_z(verts,l,stack)
+  x_y(verts,l,stack)
+  x_z(verts,l,stack)
+  verts.extend(stack)
+  stack=[]
+  l=l*2
+
+m_d=[]
+c_m_d=[]
+c_o=[]
+C_O=[]
+
+print(verts)
+
+n=len(verts)
+
+for i in range(n):
+  m_d.append("mesh_data_"+str(i))
+  c_m_d.append("cube_mesh_data_"+str(i))
+  c_o.append("cube_object"+str(i))
+  C_O.append("Cube_Object"+str(i))
+
+  m_d[i] = bpy.data.meshes.new(c_m_d[i])
+  m_d[i].from_pydata(verts[i], [], faces)  
+  m_d[i].update() # (calc_edges=True) not needed here  
+  c_o[i] = bpy.data.objects.new(C_O[i], m_d[i])  
+
+scene = bpy.context.scene    
+bpy.context.scene.frame_set(0)
+
+for i in range(n):
+  scene.objects.link(c_o[i])    
+           
+bpy.ops.object.camera_add(location=(0, 0, 30),rotation=(math.pi/4, 0, math.pi/2))
+camera=bpy.data.objects['Camera']
+
+T_START=0
+current_frame = T_START
+
+for i in range(n):
+  cube=bpy.data.objects[C_O[i]]
+  cube.hide_render = True
+  cube.keyframe_insert(  data_path="hide_render",index=-1,frame=current_frame)
+  
+  current_frame = T_START+i
+  cube.hide_render = False 
+  cube.keyframe_insert(  data_path="hide_render",index=-1,frame=current_frame)
+  camera.location=(30*math.cos(2*math.pi/n*i)+10,30*math.sin(2*math.pi/n*i)+10,30)
+  camera.rotation_euler = (10*math.pi/36, 0, math.pi/2+2*math.pi/n*i)
+  camera.keyframe_insert(  data_path="location",index=-1,frame=current_frame)
+  camera.keyframe_insert(  data_path="rotation_euler",index=-1,frame=current_frame)
